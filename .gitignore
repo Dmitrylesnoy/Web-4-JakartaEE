@@ -1,0 +1,15 @@
+settings.xml
+target
+customization
+.env
+/customization
+customization/commands.cli
+
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+
+.idea/
+.vscode/
