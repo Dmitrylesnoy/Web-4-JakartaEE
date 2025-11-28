@@ -1,4 +1,4 @@
-package com.lab.web.api;
+package com.lab.web.processing;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;

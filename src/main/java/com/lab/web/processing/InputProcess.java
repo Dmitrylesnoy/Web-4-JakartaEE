@@ -1,4 +1,4 @@
-package com.lab.web.api;
+package com.lab.web.processing;
 
 import com.lab.web.beans.Point;
 import com.lab.web.data.HitDataBean;
