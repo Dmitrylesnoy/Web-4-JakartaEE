@@ -11,12 +11,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "point_data")
+@NoArgsConstructor
 public class PointData implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +28,12 @@ public class PointData implements Serializable {
     private float y;
     private float r;
     private boolean hit;
+
+    public PointData(float x, float y, float r) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+    }
 
     @Column(name = "exec_time")
     private long execTime;

@@ -2,15 +2,12 @@ package com.lab.web.utils;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.MissingFormatArgumentException;
 
 import com.lab.web.beans.Point;
 import com.lab.web.data.PointData;
 
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.faces.application.FacesMessage;
-import jakarta.faces.component.UIComponent;
-import jakarta.faces.component.UIInput;
-import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -28,66 +25,31 @@ public class Validator implements Serializable {
     private float y;
     private float r;
 
-    public void validateX(FacesContext context, UIComponent comp, Object value) {
-        String graphClickParam = context.getExternalContext().getRequestParameterMap().get("formCoords:graphClickFlag");
-        if ("true".equals(graphClickParam)) {
-            ((UIInput) comp).setValid(true);
-            return;
-        }
-
-        float inpX = (float) value;
-        System.out.println("Inside X validator. Value: " + inpX);
-
-        if (-4 > inpX || inpX > 4) {
-            ((UIInput) comp).setValid(false);
-            FacesMessage message = new FacesMessage("X value must be integer, from -4 to 4");
-            context.addMessage(comp.getClientId(context), message);
-            System.out.println("Validation failed!");
-        } else {
-            ((UIInput) comp).setValid(true);
-            System.out.println("Validation Sucess!");
-        }
+    public static boolean validateX(Float x) {
+        return x >= -3 && x <= 5;
     }
 
-    public void validateY(FacesContext context, UIComponent comp, Object value) {
-        String graphClickParam = context.getExternalContext().getRequestParameterMap().get("formCoords:graphClickFlag");
-        if ("true".equals(graphClickParam)) {
-            ((UIInput) comp).setValid(true);
-            return;
-        }
-
-        float inpY = (float) value;
-        System.out.println("Inside Y validator. Value: " + inpY);
-
-        if (-5 > inpY || inpY > 3) {
-            ((UIInput) comp).setValid(false);
-            FacesMessage message = new FacesMessage("Y value must be number, from -5 to 3");
-            context.addMessage(comp.getClientId(context), message);
-            System.out.println("Validation failed!");
-        } else {
-            ((UIInput) comp).setValid(true);
-            System.out.println("Validation Sucess!");
-        }
+    public static boolean validateY(Float y) {
+        return y >= -5 && y <= 5;
     }
 
-    public void validateR(FacesContext context, UIComponent comp, Object value) {
-        float inpR = (float) value;
-        System.out.println("Inside R validator. Value: " + inpR);
-
-        if (inpR <= 0) {
-            ((UIInput) comp).setValid(false);
-            FacesMessage message = new FacesMessage("R value must be selected and not be zero");
-            context.addMessage(comp.getClientId(context), message);
-            System.out.println("R validation failed!");
-        } else {
-            ((UIInput) comp).setValid(true);
-            System.out.println("R validation Success!");
-        }
+    public static boolean validateR(Float r) {
+        return r >= 0 && r <= 5;
     }
 
-    public static PointData fillPoint(PointData point) {
+    public static PointData fillPoint(String xStr, String yStr, String rStr, boolean validate)
+            throws IllegalArgumentException {
         long start = System.nanoTime();
-        point.setHit(checkArea(point.getX(), point.getY(), point.getR()));
+
+        Float x = Float.valueOf(xStr);
+        Float y = Float.valueOf(yStr);
+        Float r = Float.valueOf(rStr);
+
+        if (validate && !(validateX(x) && validateY(y) && validateR(r)))
+            throw new IllegalArgumentException("Point coordinates out of diaposones");
+
+        PointData point = new PointData(x, y, r);
+        point.setHit(checkArea(x, y, r));
         point.setDate(LocalDateTime.now());
         point.setExecTime(System.nanoTime() - start);
 

@@ -9,7 +9,7 @@ import com.lab.web.databases.JDBCDataAccessStrategy;
 import jakarta.ejb.Singleton;
 import jakarta.transaction.Transactional;
 
-@Transactional
+// @Transactional
 @Singleton
 public class HitDataBean implements Serializable {
     private DataAccessStrategy dataAccessStrategy;

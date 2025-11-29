@@ -1,5 +1,12 @@
 package com.lab.web.API;
 
+import java.util.MissingFormatArgumentException;
+
+import com.lab.web.data.HitDataBean;
+import com.lab.web.data.PointData;
+import com.lab.web.utils.Validator;
+
+import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -20,22 +27,40 @@ public class FormResource {
     @Context
     private UriInfo context;
 
+    @Inject
+    private HitDataBean hitDataBean;
+
     @POST
     public Response postForm(MultivaluedMap<String, String> formParams) {
-        String x = formParams.getFirst("x");
-        String y = formParams.getFirst("y");
-        String r = formParams.getFirst("r");
+        String xStr = formParams.getFirst("x");
+        String yStr = formParams.getFirst("y");
+        String rStr = formParams.getFirst("r");
         String graph = formParams.getFirst("graph");
 
-        boolean hit = false; // TODO Implement hit calculation logic
+        try {
+            PointData point = Validator.fillPoint(xStr, yStr, rStr, !("true".equals(graph)));
+            hitDataBean.addPoint(point);
 
-        String response = String.format(
-                "{\"x\": \"%s\", \"y\": \"%s\", \"r\": \"%s\", \"hit\": %s}",
-                x, y, r, hit);
+            String response = String.format(
+                    "{\"x\": %f, \"y\": %f, \"r\": %f, \"hit\": %b, \"execTime\": %d, \"date\": \"%s\"}",
+                    point.getX(), point.getY(), point.getR(), point.isHit(), point.getExecTime(),
+                    point.getDataFormatted());
+            System.out.println("Processed point: " + response);
 
-        return Response.ok()
-                .entity(response)
-                .type(MediaType.APPLICATION_JSON)
-                .build();
+            return Response.ok()
+                    .entity(response)
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        } catch (MissingFormatArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("{\"error\": \"Missing point arguments\"}")
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("{\"error\": \"" + e.toString() + "\"}")
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
     }
 }
