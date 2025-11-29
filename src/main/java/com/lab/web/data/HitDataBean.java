@@ -6,13 +6,11 @@ import java.util.List;
 import com.lab.web.databases.DataAccessStrategy;
 import com.lab.web.databases.JDBCDataAccessStrategy;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Named;
+import jakarta.ejb.Singleton;
 import jakarta.transaction.Transactional;
 
-@Named("hitData")
 @Transactional
-@ApplicationScoped
+@Singleton
 public class HitDataBean implements Serializable {
     private DataAccessStrategy dataAccessStrategy;
 

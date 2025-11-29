@@ -1,4 +1,4 @@
-package com.lab.web.controllers;
+package com.lab.web.API;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -10,24 +10,22 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.Provider;
 
-@Path("form")
-public class FormController {
+@Provider
+@Path("/form")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
+public class FormResource {
     @Context
     private UriInfo context;
 
-    @GET
-    @Produces(MediaType.TEXT_HTML)
-    public Response getFormPage() {
-        return Response.seeOther(context.getBaseUri().resolve("../index.html")).build();
-    }
-
     @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response postForm(MultivaluedMap<String, String> formParams) {
         String x = formParams.getFirst("x");
         String y = formParams.getFirst("y");
         String r = formParams.getFirst("r");
+        String graph = formParams.getFirst("graph");
 
         boolean hit = false; // TODO Implement hit calculation logic
 

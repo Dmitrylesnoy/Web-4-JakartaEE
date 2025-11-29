@@ -2,15 +2,13 @@ package com.lab.web.beans;
 
 import java.io.Serializable;
 
-import jakarta.enterprise.context.SessionScoped;
-import jakarta.inject.Named;
+import jakarta.ejb.Stateful;
 import lombok.Getter;
 import lombok.Setter;
 
 @Setter
 @Getter
-@Named("point")
-@SessionScoped
+@Stateful
 public class Point implements Serializable {
     private float x;
     private float y;
