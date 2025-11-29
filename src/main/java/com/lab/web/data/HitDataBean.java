@@ -4,10 +4,9 @@ import java.io.Serializable;
 import java.util.List;
 
 import com.lab.web.databases.DataAccessStrategy;
-import com.lab.web.databases.JDBCDataAccessStrategy;
+import com.lab.web.databases.JDBCDataAccess;
 
 import jakarta.ejb.Singleton;
-import jakarta.transaction.Transactional;
 
 // @Transactional
 @Singleton
@@ -15,7 +14,7 @@ public class HitDataBean implements Serializable {
     private DataAccessStrategy dataAccessStrategy;
 
     public HitDataBean() {
-        this.dataAccessStrategy = new JDBCDataAccessStrategy();
+        this.dataAccessStrategy = new JDBCDataAccess();
     }
 
     public List<PointData> getData() {

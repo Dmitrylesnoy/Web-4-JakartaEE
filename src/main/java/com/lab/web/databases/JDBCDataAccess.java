@@ -17,10 +17,10 @@ import com.lab.web.data.PointData;
 import jakarta.transaction.Transactional;
 
 @Transactional
-public class JDBCDataAccessStrategy implements DataAccessStrategy {
+public class JDBCDataAccess implements DataAccessStrategy {
     private DataSource dataSource;
 
-    public JDBCDataAccessStrategy() {
+    public JDBCDataAccess() {
         try {
             InitialContext ctx = new InitialContext();
             this.dataSource = (DataSource) ctx.lookup("java:/jboss/datasources/MyPostgresDS");

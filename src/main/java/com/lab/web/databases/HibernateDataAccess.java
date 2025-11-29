@@ -10,7 +10,7 @@ import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 
 @Transactional
-public class HibernateDataAccessStrategy implements DataAccessStrategy {
+public class HibernateDataAccess implements DataAccessStrategy {
     @PersistenceContext(unitName = "com.lab.web3")
     private EntityManager entityManager;
 
