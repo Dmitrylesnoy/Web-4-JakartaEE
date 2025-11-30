@@ -40,7 +40,9 @@ public class HitDataBean implements Serializable {
             json.append("\"x\":").append(point.getX()).append(",");
             json.append("\"y\":").append(point.getY()).append(",");
             json.append("\"r\":").append(point.getR()).append(",");
-            json.append("\"hit\":").append(point.isHit());
+            json.append("\"hit\":").append(point.isHit()).append(",");
+            json.append("\"execTime\":").append(point.getExecTime()).append(",");
+            json.append("\"date\":\"").append(point.getdateFormatted()).append("\"");
             json.append("}");
 
             if (i < data.size() - 1) {

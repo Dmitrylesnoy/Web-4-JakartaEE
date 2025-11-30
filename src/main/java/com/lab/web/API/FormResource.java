@@ -10,6 +10,7 @@ import com.lab.web.utils.Validator;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -23,12 +24,24 @@ import jakarta.ws.rs.ext.Provider;
 @Path("/form")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class FormResource {
+public class FormResource { // TODO: use beans mb for nput and output
     @Context
     private UriInfo context;
 
     @Inject
     private HitDataBean hitDataBean;
+
+    @GET
+    public Response getData() {
+        try {
+            return Response.ok().entity(hitDataBean.getDataAsJson()).type(MediaType.APPLICATION_JSON).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("{\"error\": \"" + e.toString() + "\"}")
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+    }
 
     @POST
     public Response postForm(Map<String, Object> requestBody) {
@@ -41,16 +54,14 @@ public class FormResource {
             PointData point = Validator.fillPoint(xStr, yStr, rStr, !("true".equals(graph)));
             hitDataBean.addPoint(point);
 
-            // {"x":-1,"y":1.1,"r":4,"graph":"false"}
-
             String response = String.format(Locale.US,
                     "{\"x\": %.4f, \"y\": %.4f, \"r\": %.4f, \"hit\": %b, \"execTime\": %d, \"date\": \"%s\"}",
                     point.getX(), point.getY(), point.getR(), point.isHit(), point.getExecTime(),
-                    point.getDataFormatted());
-            System.out.println("Processed point: " + response);
+                    point.getdateFormatted());
+            System.out.println("Processed point: graph " + graph + " " + response);
 
             return Response.ok()
-                    .entity(response)
+                    .entity(hitDataBean.getDataAsJson())
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (MissingFormatArgumentException e) {

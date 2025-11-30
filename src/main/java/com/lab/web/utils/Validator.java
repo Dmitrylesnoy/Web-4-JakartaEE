@@ -3,22 +3,16 @@ package com.lab.web.utils;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-import com.lab.web.beans.Point;
 import com.lab.web.data.PointData;
 
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@Named("validator")
 @RequestScoped
 public class Validator implements Serializable {
-    @Inject
-    private Point point;
 
     private float x;
     private float y;
@@ -55,7 +49,7 @@ public class Validator implements Serializable {
         return point;
     }
 
-    public static boolean checkArea(float x, float y, float r) {
+    public static boolean checkArea(float x, float y, float r) { // TODO : new graph
         if (x == 0 && y == 0)
             return true;
         if (x > 0 && y > 0) { // Quadrant 1:

@@ -44,7 +44,7 @@ public class PointData implements Serializable {
         return String.format("X: %f , Y: %f , R: %f , Hit: %b , Exec: %d , Date: %s", x, y, r, hit, execTime, date);
     }
 
-    public String getDataFormatted() {
+    public String getdateFormatted() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
         return date.format(formatter);
     }
