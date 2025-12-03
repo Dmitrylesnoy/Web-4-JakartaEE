@@ -3,12 +3,11 @@ package com.lab.web.data;
 import java.io.Serializable;
 import java.util.List;
 
-import com.lab.web.databases.DataAccessStrategy;
-import com.lab.web.databases.JDBCDataAccess;
+import com.lab.web.database.DataAccessStrategy;
+import com.lab.web.database.JDBCDataAccess;
 
 import jakarta.ejb.Singleton;
 
-// @Transactional
 @Singleton
 public class HitDataBean implements Serializable {
     private DataAccessStrategy dataAccessStrategy;
