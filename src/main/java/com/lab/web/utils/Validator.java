@@ -52,17 +52,17 @@ public class Validator implements Serializable {
     public static boolean checkArea(float x, float y, float r) { // TODO : new graph
         if (x == 0 && y == 0)
             return true;
-        if (x > 0 && y > 0) { // Quadrant 1:
-            return x <= r && y <= r / 2.0; // Rectangle
-
-        } else if (x > 0 && y < 0) { // Quadrant 4:
+        if (x >= 0 && y >= 0) { // Quadrant 1:
             return false; // nothing
 
-        } else if (x < 0 && y > 0) { // Quadrant 2:
-            return y - x <= r; // Triangle
+        } else if (x >= 0 && y <= 0) { // Quadrant 4:
+            return x <= r && y >= -1 * r; // Rectangle
+
+        } else if (x <= 0 && y >= 0) { // Quadrant 2:
+            return x * x + y * y <= r * r; // Quarter circle
 
         } else { // Quadrant 3:
-            return x * x + y * y <= (r / 2.0) * (r / 2.0); // Quarter circle
+            return y >= -0.5 * x - 0.5 * r; // Triangle
         }
     }
 }
