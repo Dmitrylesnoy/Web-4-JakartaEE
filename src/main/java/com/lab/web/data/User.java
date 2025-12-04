@@ -13,5 +13,5 @@ public record User(
                 @Id @GeneratedValue(strategy = GenerationType.IDENTITY) Long id,
                 @Column(name = "username", unique = true, nullable = false) String username,
                 @Column(name = "password", nullable = false) String password,
-                @Column(name = "token", unique = true, nullable = false) String token) {
+                @Column(name = "token", unique = true) String token) {
 }

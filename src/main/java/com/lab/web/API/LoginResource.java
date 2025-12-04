@@ -1,0 +1,146 @@
+package com.lab.web.API;
+
+import java.util.UUID;
+import java.util.logging.Logger;
+
+import com.lab.web.API.records.LoginRequest;
+import com.lab.web.API.records.LoginResponse;
+import com.lab.web.API.records.LogoutResponse;
+import com.lab.web.data.User;
+import com.lab.web.database.DataAccessStrategy;
+import com.lab.web.database.JDBCDataAccess;
+
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.Provider;
+
+@Provider
+@RequestScoped
+@Path("/user")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
+public class LoginResource {
+    @Context
+    private UriInfo context;
+
+    private DataAccessStrategy dataAccess;
+
+    public LoginResource() {
+        this.dataAccess = new JDBCDataAccess();
+    }
+
+    private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
+
+    /*
+     * input: {username, hashedPassword}
+     * output: {result: "successfully login" | "user registered" | "wrong password",
+     * token: string | null}
+     */
+    @POST
+    @Path("/login")
+    public Response checkPassword(LoginRequest request) {
+        logger.info("Login attempt for user: " + (request != null ? request.username() : "null"));
+
+        try {
+            if (request == null || request.username() == null || request.hashedPassword() == null) {
+                logger.warning("Invalid login request - missing required fields");
+                return Response.status(Status.BAD_REQUEST)
+                        .entity(new LoginResponse("invalid request", null))
+                        .build();
+            }
+
+            if (request.username().trim().isEmpty() || request.hashedPassword().trim().isEmpty()) {
+                logger.warning("Invalid login request - empty username or password");
+                return Response.status(Status.BAD_REQUEST)
+                        .entity(new LoginResponse("invalid request", null))
+                        .build();
+            }
+
+            User user = new User(null, request.username().trim(), request.hashedPassword().trim(), null);
+            boolean userExists = dataAccess.isUserExist(user);
+
+            if (!userExists) {
+                String token = UUID.randomUUID().toString();
+                User newUser = new User(null, request.username().trim(), request.hashedPassword().trim(), token);
+                dataAccess.createUser(newUser);
+
+                logger.info("New user registered: " + request.username());
+                return Response.ok(new LoginResponse("user registered", token)).build();
+
+            } else {
+                boolean passwordCorrect = dataAccess.checkPassword(user);
+
+                if (passwordCorrect) {
+                    dataAccess.generateToken(user);
+                    String token = dataAccess.getToken(user);
+
+                    logger.info("Successful login for user: " + request.username());
+                    return Response.ok(new LoginResponse("successfully login", token)).build();
+
+                } else {
+                    logger.warning("Failed login attempt - wrong password for user: " + request.username());
+                    return Response.status(Status.UNAUTHORIZED)
+                            .entity(new LoginResponse("wrong password", null))
+                            .build();
+                }
+            }
+        } catch (Exception e) {
+            logger.severe("Server error during login: " + e.getMessage());
+            e.printStackTrace();
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity(new LoginResponse("server error", null))
+                    .build();
+        }
+    }
+
+    /*
+     * Header - token with received user's token Authorization header
+     * result - close user session
+     */
+    @GET
+    @Path("/logout")
+    public Response closeSession(@HeaderParam("AuthToken") String authTokenHeader) {
+        logger.info("Logout attempt");
+
+        try {
+            String token = authTokenHeader;
+
+            if (token == null || token.trim().isEmpty()) {
+                logger.warning("Logout attempt without token");
+                return Response.status(Status.BAD_REQUEST)
+                        .entity(new LogoutResponse("token required", false))
+                        .build();
+            }
+
+            User user = dataAccess.getUserByToken(token);
+            if (user == null) {
+                logger.warning("Logout attempt with invalid token");
+                return Response.status(Status.UNAUTHORIZED)
+                        .entity(new LogoutResponse("invalid token", false))
+                        .build();
+            }
+
+            dataAccess.invalidateToken(token);
+
+            logger.info("Successful logout for user: " + user.username());
+            return Response.ok(new LogoutResponse("successfully logout", true)).build();
+
+        } catch (Exception e) {
+            logger.severe("Server error during logout: " + e.getMessage());
+            e.printStackTrace();
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity(new LogoutResponse("server error", false))
+                    .build();
+        }
+    }
+}

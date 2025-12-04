@@ -85,4 +85,25 @@ public class HibernateDataAccess implements DataAccessStrategy {
             throw new RuntimeException("User not found: " + user.username(), e);
         }
     }
+
+    @Override
+    public User getUserByToken(String token) {
+        Query query = entityManager.createQuery("SELECT u FROM User u WHERE u.token = :token");
+        query.setParameter("token", token);
+        try {
+            return (User) query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public void invalidateToken(String token) {
+        Query query = entityManager.createQuery("UPDATE User u SET u.token = NULL WHERE u.token = :token");
+        query.setParameter("token", token);
+        int rowsAffected = query.executeUpdate();
+        if (rowsAffected > 0) {
+            System.out.println("Hibernate: token invalidated - " + token);
+        }
+    }
 }

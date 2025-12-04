@@ -19,4 +19,8 @@ public interface DataAccessStrategy {
     void generateToken(User user);
 
     String getToken(User user);
+
+    User getUserByToken(String token);
+
+    void invalidateToken(String token);
 }

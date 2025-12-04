@@ -14,5 +14,8 @@ pom.xml.next
 .idea/
 .vscode/
 
+src/main/webapp
 src/main/webapp/
+src/main/webapp/asset-manifest.json
 src/main/webapp/index.html
+/src/main/webapp

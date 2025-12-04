@@ -155,4 +155,39 @@ public class JDBCDataAccess implements DataAccessStrategy {
             throw new RuntimeException("Failed to get token", e);
         }
     }
+
+    @Override
+    public User getUserByToken(String token) {
+        String sql = "SELECT id, username, password, token FROM web_users WHERE token = ?";
+        try (Connection conn = dataSource.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, token);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new User(
+                        rs.getLong("id"),
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("token"));
+            }
+            return null;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get user by token", e);
+        }
+    }
+
+    @Override
+    public void invalidateToken(String token) {
+        String sql = "UPDATE web_users SET token = NULL WHERE token = ?";
+        try (Connection conn = dataSource.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, token);
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("JDBC: token invalidated - " + token);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to invalidate token", e);
+        }
+    }
 }
