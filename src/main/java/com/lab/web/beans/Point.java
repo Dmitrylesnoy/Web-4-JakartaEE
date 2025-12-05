@@ -13,5 +13,5 @@ public class Point implements Serializable {
     private float x;
     private float y;
     private float r;
-    private boolean isGraphClick = false;
+    private boolean graphFlag = false;
 }
