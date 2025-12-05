@@ -3,14 +3,19 @@ package com.lab.web.API;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingFormatArgumentException;
+import java.util.logging.Logger;
+import java.net.URI;
 
 import com.lab.web.data.HitDataBean;
 import com.lab.web.data.PointData;
+import com.lab.web.utils.TokenVetification;
 import com.lab.web.utils.Validator;
 
 import jakarta.inject.Inject;
+import jakarta.security.auth.message.AuthException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -31,26 +36,37 @@ public class FormResource { // TODO: use beans mb for nput and output
     @Inject
     private HitDataBean hitDataBean;
 
+    private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
+
     @GET
-    public Response getData() {
+    public Response getData(@HeaderParam("AuthToken") String authTokenHeader) {
         try {
+            TokenVetification.checkUserByToken(authTokenHeader);
+
+            logger.info("success data fetch");
             return Response.ok().entity(hitDataBean.getDataAsJson()).type(MediaType.APPLICATION_JSON).build();
+        } catch (AuthException e) {
+            URI logoutUri = context.getBaseUriBuilder().path("user").path("logout").build();
+            return Response.temporaryRedirect(logoutUri).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"" + e.toString() + "\"}")
+                    .entity("{\"error\": \"" + e.getMessage() + "\"}")
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
     }
 
     @POST
-    public Response postForm(Map<String, Object> requestBody) {
-        String xStr = requestBody.get("x").toString();
-        String yStr = requestBody.get("y").toString();
-        String rStr = requestBody.get("r").toString();
-        String graph = requestBody.get("graph").toString();
+    public Response postForm(@HeaderParam("AuthToken") String authTokenHeader, Map<String, Object> requestBody) {
 
         try {
+            TokenVetification.checkUserByToken(authTokenHeader);
+
+            String xStr = requestBody.get("x").toString();
+            String yStr = requestBody.get("y").toString();
+            String rStr = requestBody.get("r").toString();
+            String graph = requestBody.get("graph").toString();
+
             PointData point = Validator.fillPoint(xStr, yStr, rStr, !("true".equals(graph)));
             hitDataBean.addPoint(point);
 
@@ -58,7 +74,7 @@ public class FormResource { // TODO: use beans mb for nput and output
                     "{\"x\": %.4f, \"y\": %.4f, \"r\": %.4f, \"hit\": %b, \"execTime\": %d, \"date\": \"%s\"}",
                     point.getX(), point.getY(), point.getR(), point.isHit(), point.getExecTime(),
                     point.getdateFormatted());
-            System.out.println("Processed point: graph " + graph + " " + response);
+            logger.info("Processed point: graph " + graph + " " + response);
 
             return Response.ok()
                     .entity(hitDataBean.getDataAsJson())
@@ -69,14 +85,12 @@ public class FormResource { // TODO: use beans mb for nput and output
                     .entity("{\"error\": \"Missing point arguments\"}")
                     .type(MediaType.APPLICATION_JSON)
                     .build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"" + e.toString() + "\"}")
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
+        } catch (AuthException e) {
+            URI logoutUri = context.getBaseUriBuilder().path("user").path("logout").build();
+            return Response.temporaryRedirect(logoutUri).build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("{\"error\": \"Invalid request data: " + e.getMessage() + "\"}")
+                    .entity("{\"error\": \"" + e.getMessage() + "\"}")
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }

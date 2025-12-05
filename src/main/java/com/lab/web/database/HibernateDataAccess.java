@@ -2,21 +2,31 @@ package com.lab.web.database;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
+import com.lab.web.API.LoginResource;
 import com.lab.web.data.PointData;
 import com.lab.web.data.User;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
-import jakarta.persistence.Query;
 
 @Transactional
 public class HibernateDataAccess implements DataAccessStrategy {
     @PersistenceContext(unitName = "com.lab.web3")
     private EntityManager entityManager;
+
+    private static HibernateDataAccess instance;
+
+    private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
+
+    public static HibernateDataAccess getInstance() {
+        return instance == null ? instance = new HibernateDataAccess() : instance;
+    }
 
     @Override
     public List<PointData> getAllPoints() {
@@ -27,7 +37,7 @@ public class HibernateDataAccess implements DataAccessStrategy {
 
     @Override
     public void addPoint(PointData point) {
-        System.out.println("Hibernate: point added");
+        logger.info("Hibernate: point added");
         entityManager.persist(point);
     }
 
@@ -42,7 +52,7 @@ public class HibernateDataAccess implements DataAccessStrategy {
     @Override
     public void createUser(User user) {
         entityManager.persist(user);
-        System.out.println("Hibernate: user created - " + user.username());
+        logger.info("Hibernate: user created - " + user.username());
     }
 
     @Override
@@ -68,7 +78,7 @@ public class HibernateDataAccess implements DataAccessStrategy {
             String newToken = UUID.randomUUID().toString();
             User updatedUser = new User(existingUser.id(), existingUser.username(), existingUser.password(), newToken);
             entityManager.merge(updatedUser);
-            System.out.println("Hibernate: token generated for user - " + user.username());
+            logger.info("Hibernate: token generated for user - " + user.username());
         } catch (NoResultException e) {
             throw new RuntimeException("User not found: " + user.username(), e);
         }
@@ -103,7 +113,7 @@ public class HibernateDataAccess implements DataAccessStrategy {
         query.setParameter("token", token);
         int rowsAffected = query.executeUpdate();
         if (rowsAffected > 0) {
-            System.out.println("Hibernate: token invalidated - " + token);
+            logger.info("Hibernate: token invalidated - " + token);
         }
     }
 }

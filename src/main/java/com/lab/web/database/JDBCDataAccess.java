@@ -8,11 +8,13 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
+import com.lab.web.API.LoginResource;
 import com.lab.web.data.PointData;
 import com.lab.web.data.User;
 
@@ -22,6 +24,10 @@ import jakarta.transaction.Transactional;
 public class JDBCDataAccess implements DataAccessStrategy {
     private DataSource dataSource;
 
+    private static JDBCDataAccess instance;
+
+    private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
+
     public JDBCDataAccess() {
         try {
             InitialContext ctx = new InitialContext();
@@ -29,6 +35,10 @@ public class JDBCDataAccess implements DataAccessStrategy {
         } catch (NamingException e) {
             throw new RuntimeException("Failed to lookup DataSource", e);
         }
+    }
+
+    public static JDBCDataAccess getInstance() {
+        return instance == null ? instance = new JDBCDataAccess() : instance;
     }
 
     @Override
@@ -57,7 +67,7 @@ public class JDBCDataAccess implements DataAccessStrategy {
 
     @Override
     public void addPoint(PointData point) {
-        System.out.println("JDBC: point added");
+        logger.info("JDBC: point added");
         String sql = "INSERT INTO point_data (x, y, r, hit, exec_time, date) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -91,7 +101,7 @@ public class JDBCDataAccess implements DataAccessStrategy {
 
     @Override
     public void createUser(User user) {
-        System.out.println("JDBC: user created - " + user.username());
+        logger.info("JDBC: user created - " + user.username());
         String sql = "INSERT INTO web_users (username, password, token) VALUES (?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -133,7 +143,7 @@ public class JDBCDataAccess implements DataAccessStrategy {
             if (rowsAffected == 0) {
                 throw new RuntimeException("User not found: " + user.username());
             }
-            System.out.println("JDBC: token generated for user - " + user.username());
+            logger.info("JDBC: token generated for user - " + user.username());
         } catch (SQLException e) {
             throw new RuntimeException("Failed to generate token", e);
         }
@@ -184,7 +194,7 @@ public class JDBCDataAccess implements DataAccessStrategy {
             stmt.setString(1, token);
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
-                System.out.println("JDBC: token invalidated - " + token);
+                logger.info("JDBC: token invalidated - " + token);
             }
         } catch (SQLException e) {
             throw new RuntimeException("Failed to invalidate token", e);
