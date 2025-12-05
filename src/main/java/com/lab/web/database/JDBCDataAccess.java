@@ -42,12 +42,14 @@ public class JDBCDataAccess implements DataAccessStrategy {
     }
 
     @Override
-    public List<PointData> getAllPoints() {
+    public List<PointData> getAllPoints(Long userId) {
         List<PointData> points = new ArrayList<>();
-        String sql = "SELECT id, x, y, r, hit, exec_time, date FROM point_data ORDER BY date DESC";
+        String sql = "SELECT id, x, y, r, hit, exec_time, date FROM point_data WHERE user_id = ? ORDER BY date DESC";
+
         try (Connection conn = dataSource.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery()) {
+                PreparedStatement stmt = conn.prepareStatement(sql);) {
+            stmt.setLong(1, userId);
+            ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 PointData point = new PointData();
                 point.setId(rs.getLong("id"));
@@ -68,7 +70,7 @@ public class JDBCDataAccess implements DataAccessStrategy {
     @Override
     public void addPoint(PointData point) {
         logger.info("JDBC: point added");
-        String sql = "INSERT INTO point_data (x, y, r, hit, exec_time, date) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO point_data (x, y, r, hit, exec_time, date, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setFloat(1, point.getX());
@@ -77,6 +79,7 @@ public class JDBCDataAccess implements DataAccessStrategy {
             stmt.setBoolean(4, point.isHit());
             stmt.setLong(5, point.getExecTime());
             stmt.setTimestamp(6, Timestamp.valueOf(point.getDate()));
+            stmt.setLong(7, point.getUser());
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to add point", e);
@@ -101,7 +104,6 @@ public class JDBCDataAccess implements DataAccessStrategy {
 
     @Override
     public void createUser(User user) {
-        logger.info("JDBC: user created - " + user.username());
         String sql = "INSERT INTO web_users (username, password, token) VALUES (?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -109,6 +111,7 @@ public class JDBCDataAccess implements DataAccessStrategy {
             stmt.setString(2, user.password());
             stmt.setString(3, user.token());
             stmt.executeUpdate();
+            logger.info("JDBC: user created - " + user.username());
         } catch (SQLException e) {
             throw new RuntimeException("Failed to create user", e);
         }

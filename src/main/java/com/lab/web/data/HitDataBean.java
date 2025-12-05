@@ -16,16 +16,16 @@ public class HitDataBean implements Serializable {
         this.dataAccessStrategy = new JDBCDataAccess();
     }
 
-    public List<PointData> getData() {
-        return dataAccessStrategy.getAllPoints();
+    public List<PointData> getData(Long userId) {
+        return dataAccessStrategy.getAllPoints(userId);
     }
 
     public void addPoint(PointData point) {
         dataAccessStrategy.addPoint(point);
     }
 
-    public String getDataAsJson() {
-        List<PointData> data = getData();
+    public String getDataAsJson(Long userId) {
+        List<PointData> data = getData(userId);
         if (data.isEmpty()) {
             return "[]";
         }
@@ -49,6 +49,7 @@ public class HitDataBean implements Serializable {
             }
         }
         json.append("]");
+        System.out.println(json);
         return json.toString();
     }
 }

@@ -29,9 +29,11 @@ public class HibernateDataAccess implements DataAccessStrategy {
     }
 
     @Override
-    public List<PointData> getAllPoints() {
-        TypedQuery<PointData> query = entityManager.createQuery("SELECT p FROM PointData p ORDER BY p.date DESC",
+    public List<PointData> getAllPoints(Long userId) {
+        TypedQuery<PointData> query = entityManager.createQuery(
+                "SELECT p FROM PointData p WHERE p.user_id=:userId ORDER BY p.date DESC",
                 PointData.class);
+        query.setParameter("userId", userId);
         return query.getResultList();
     }
 

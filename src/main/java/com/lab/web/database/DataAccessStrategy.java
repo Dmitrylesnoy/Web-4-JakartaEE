@@ -6,7 +6,7 @@ import com.lab.web.data.PointData;
 import com.lab.web.data.User;
 
 public interface DataAccessStrategy {
-    List<PointData> getAllPoints();
+    List<PointData> getAllPoints(Long userId);
 
     void addPoint(PointData point);
 

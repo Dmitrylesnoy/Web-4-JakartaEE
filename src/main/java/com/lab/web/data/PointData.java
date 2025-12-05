@@ -38,10 +38,13 @@ public class PointData implements Serializable {
     @Column(name = "exec_time")
     private long execTime;
     private LocalDateTime date;
+    @Column(name = "user_id")
+    private Long user;
 
     @Override
     public String toString() {
-        return String.format("X: %f , Y: %f , R: %f , Hit: %b , Exec: %d , Date: %s", x, y, r, hit, execTime, date);
+        return String.format("X: %f , Y: %f , R: %f , Hit: %b , Exec: %d , Date: %s , UserID: %l", x, y, r, hit,
+                execTime, date, user);
     }
 
     public String getdateFormatted() {

@@ -44,7 +44,8 @@ public class FormResource { // TODO: use beans mb for nput and output
             TokenVetification.checkUserByToken(authTokenHeader);
 
             logger.info("success data fetch");
-            return Response.ok().entity(hitDataBean.getDataAsJson()).type(MediaType.APPLICATION_JSON).build();
+            return Response.ok().entity(hitDataBean.getDataAsJson(TokenVetification.getUserIDbyToken(authTokenHeader)))
+                    .type(MediaType.APPLICATION_JSON).build();
         } catch (AuthException e) {
             URI logoutUri = context.getBaseUriBuilder().path("user").path("logout").build();
             return Response.temporaryRedirect(logoutUri).build();
@@ -68,16 +69,18 @@ public class FormResource { // TODO: use beans mb for nput and output
             String graph = requestBody.get("graph").toString();
 
             PointData point = Validator.fillPoint(xStr, yStr, rStr, !("true".equals(graph)));
+            Long userId = TokenVetification.getUserIDbyToken(authTokenHeader);
+            point.setUser(userId);
             hitDataBean.addPoint(point);
 
             String response = String.format(Locale.US,
                     "{\"x\": %.4f, \"y\": %.4f, \"r\": %.4f, \"hit\": %b, \"execTime\": %d, \"date\": \"%s\"}",
                     point.getX(), point.getY(), point.getR(), point.isHit(), point.getExecTime(),
                     point.getdateFormatted());
-            logger.info("Processed point: graph " + graph + " " + response);
+            logger.info("Processed point: graph " + graph + " User: " + userId + " " + response);
 
             return Response.ok()
-                    .entity(hitDataBean.getDataAsJson())
+                    .entity(hitDataBean.getDataAsJson(TokenVetification.getUserIDbyToken(authTokenHeader)))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (MissingFormatArgumentException e) {
