@@ -49,7 +49,6 @@ public class HitDataBean implements Serializable {
             }
         }
         json.append("]");
-        System.out.println(json);
         return json.toString();
     }
 }

@@ -4,7 +4,7 @@ import java.net.URI;
 import java.util.Locale;
 import java.util.logging.Logger;
 
-import com.lab.web.beans.Point;
+import com.lab.web.API.records.Point;
 import com.lab.web.data.HitDataBean;
 import com.lab.web.data.PointData;
 import com.lab.web.utils.TokenVetification;
@@ -28,7 +28,7 @@ import jakarta.ws.rs.ext.Provider;
 @Path("/form")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class FormResource { // TODO: use beans mb for nput and output
+public class FormResource {
     @Context
     private UriInfo context;
 
@@ -58,15 +58,14 @@ public class FormResource { // TODO: use beans mb for nput and output
 
     @POST
     public Response postForm(@HeaderParam("AuthToken") String authTokenHeader, Point pointBean) {
-
         try {
             TokenVetification.checkUserByToken(authTokenHeader);
 
             PointData point = Validator.fillPoint(
-                    String.valueOf(pointBean.getX()),
-                    String.valueOf(pointBean.getY()),
-                    String.valueOf(pointBean.getR()),
-                    pointBean.isGraphFlag());
+                    String.valueOf(pointBean.x()),
+                    String.valueOf(pointBean.y()),
+                    String.valueOf(pointBean.r()),
+                    pointBean.graphFlag());
 
             Long userId = TokenVetification.getUserIDbyToken(authTokenHeader);
             point.setUser(userId);
@@ -76,10 +75,10 @@ public class FormResource { // TODO: use beans mb for nput and output
                     "{\"x\": %.4f, \"y\": %.4f, \"r\": %.4f, \"hit\": %b, \"execTime\": %d, \"date\": \"%s\"}",
                     point.getX(), point.getY(), point.getR(), point.isHit(), point.getExecTime(),
                     point.getdateFormatted());
-            logger.info("Processed point: graph " + pointBean.isGraphFlag() + " User: " + userId + " " + response);
+            logger.info("Processed point: graph " + pointBean.graphFlag() + " User: " + userId + " " + response);
 
             return Response.ok()
-                    .entity(hitDataBean.getDataAsJson(TokenVetification.getUserIDbyToken(authTokenHeader)))
+                    .entity(response)
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (AuthException e) {
