@@ -49,7 +49,7 @@ public class Validator implements Serializable {
         return point;
     }
 
-    public static boolean checkArea(float x, float y, float r) { // TODO : new graph
+    public static boolean checkArea(float x, float y, float r) {
         if (x == 0 && y == 0)
             return true;
         if (x >= 0 && y >= 0) { // Quadrant 1:
