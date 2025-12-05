@@ -97,12 +97,6 @@
             <logger category="org.jboss.as.config">
                 <level name="DEBUG"/>
             </logger>
-            <logger category="org.jboss.modules">
-                <level name="DEBUG"/>
-            </logger>
-            <logger category="org.jboss.as.connector">
-                <level name="DEBUG"/>
-            </logger>
             <logger category="sun.rmi">
                 <level name="WARN"/>
             </logger>
@@ -136,17 +130,23 @@
         <subsystem xmlns="urn:jboss:domain:core-management:1.0"/>
         <subsystem xmlns="urn:jboss:domain:datasources:7.2">
             <datasources>
-                <datasource jndi-name="java:jboss/datasources/MyDS" pool-name="MyDS" enabled="true" use-java-context="true">
-                    <connection-url>jdbc:postgresql://postgres:5432/mydb</connection-url>
+                <datasource jndi-name="java:jboss/datasources/ExampleDS" pool-name="ExampleDS" enabled="true" use-java-context="true" statistics-enabled="${wildfly.datasources.statistics-enabled:${wildfly.statistics-enabled:false}}">
+                    <connection-url>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=${wildfly.h2.compatibility.mode:REGULAR}</connection-url>
+                    <driver>h2</driver>
+                    <security user-name="sa" password="sa"/>
+                </datasource>
+                <datasource jndi-name="java:/jboss/datasources/MyPostgresDS" pool-name="MyPostgresDS" enabled="true">
+                    <connection-url>jdbc:postgresql://localhost:5432/studs</connection-url>
                     <driver>postgresql</driver>
-                    <security>
-                        <user-name>myuser</user-name>
-                        <password>mypass</password>
-                    </security>
+                    <security user-name="s466513" password="7OzfChqk2EfbPqlk"/>
                 </datasource>
                 <drivers>
+                    <driver name="h2" module="com.h2database.h2">
+                        <xa-datasource-class>org.h2.jdbcx.JdbcDataSource</xa-datasource-class>
+                    </driver>
                     <driver name="postgresql" module="org.postgresql">
                         <driver-class>org.postgresql.Driver</driver-class>
+                        <xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
                     </driver>
                 </drivers>
             </datasources>
@@ -534,5 +534,4 @@
             <remote-destination host="${jboss.mail.server.host:localhost}" port="${jboss.mail.server.port:25}"/>
         </outbound-socket-binding>
     </socket-binding-group>
-</server>
 </server>
