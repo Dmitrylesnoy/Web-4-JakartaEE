@@ -1,15 +1,8 @@
-package com.lab.web.database;
+package com.lab.web.database.repository;
 
-import java.util.List;
-
-import com.lab.web.data.PointData;
 import com.lab.web.data.User;
 
-public interface DataAccessStrategy {
-    List<PointData> getAllPoints(Long userId);
-
-    void addPoint(PointData point);
-
+public interface UserRepository {
     boolean isUserExist(User user);
 
     void createUser(User user);
