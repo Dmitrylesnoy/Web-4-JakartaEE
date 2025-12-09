@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,6 +24,7 @@ import lombok.Setter;
 public class PointData implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore
     private Long id;
 
     private float x;
@@ -29,17 +32,19 @@ public class PointData implements Serializable {
     private float r;
     private boolean hit;
 
+    @Column(name = "exec_time")
+    private long execTime;
+    @JsonIgnore
+    private LocalDateTime date;
+    @Column(name = "user_id")
+    @JsonIgnore
+    private Long user;
+
     public PointData(float x, float y, float r) {
         this.x = x;
         this.y = y;
         this.r = r;
     }
-
-    @Column(name = "exec_time")
-    private long execTime;
-    private LocalDateTime date;
-    @Column(name = "user_id")
-    private Long user;
 
     @Override
     public String toString() {
