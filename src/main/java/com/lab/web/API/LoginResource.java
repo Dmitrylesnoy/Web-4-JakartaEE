@@ -76,7 +76,7 @@ public class LoginResource {
                 dataAccess.createUser(newUser);
 
                 logger.info("New user registered: " + request.username());
-                return Response.ok(new LoginResponse("user registered", token)).build();
+                return Response.ok(new LoginResponse(null, token)).build();
 
             } else {
                 boolean passwordCorrect = dataAccess.checkPassword(user);
@@ -86,7 +86,7 @@ public class LoginResource {
                     String token = dataAccess.getToken(user);
 
                     logger.info("Successful login for user: " + request.username());
-                    return Response.ok(new LoginResponse("successfully login", token)).build();
+                    return Response.ok(new LoginResponse(null, token)).build();
 
                 } else {
                     logger.warning("Failed login attempt - wrong password for user: " + request.username());
@@ -119,7 +119,7 @@ public class LoginResource {
             if (token == null || token.trim().isEmpty()) {
                 logger.warning("Logout attempt without token");
                 return Response.status(Status.BAD_REQUEST)
-                        .entity(new LogoutResponse("token required", false))
+                        .entity(new LogoutResponse(false))
                         .build();
             }
 
@@ -127,20 +127,20 @@ public class LoginResource {
             if (user == null) {
                 logger.warning("Logout attempt with invalid token");
                 return Response.status(Status.UNAUTHORIZED)
-                        .entity(new LogoutResponse("invalid token", false))
+                        .entity(new LogoutResponse(false))
                         .build();
             }
 
             dataAccess.invalidateToken(token);
 
             logger.info("Successful logout for user: " + user.username());
-            return Response.ok(new LogoutResponse("successfully logout", true)).build();
+            return Response.ok(new LogoutResponse(true)).build();
 
         } catch (Exception e) {
             logger.severe("Server error during logout: " + e.getMessage());
             e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity(new LogoutResponse("server error", false))
+                    .entity(new LogoutResponse(false))
                     .build();
         }
     }
