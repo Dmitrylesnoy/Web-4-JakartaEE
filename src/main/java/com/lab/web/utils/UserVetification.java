@@ -4,15 +4,15 @@ import java.util.logging.Logger;
 
 import com.lab.web.api.LoginResource;
 import com.lab.web.data.User;
-import com.lab.web.database.DataAccessStrategy;
-import com.lab.web.database.JDBCDataAccess;
+import com.lab.web.database.repository.UserRepository;
+import com.lab.web.database.service.JDBCService;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import jakarta.security.auth.message.AuthException;
 
 public class UserVetification {
     private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
-    private static DataAccessStrategy dataAccess = JDBCDataAccess.getInstance();
+    private static UserRepository dataAccess = JDBCService.getInstance();
 
     public static void checkToken(String token) throws AuthException {
         if (token == null || token.trim().isEmpty()) {

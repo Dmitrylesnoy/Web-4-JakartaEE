@@ -3,25 +3,25 @@ package com.lab.web.data;
 import java.io.Serializable;
 import java.util.List;
 
-import com.lab.web.database.DataAccessStrategy;
-import com.lab.web.database.JDBCDataAccess;
+import com.lab.web.database.repository.PointsRepository;
+import com.lab.web.database.service.JDBCService;
 
 import jakarta.ejb.Singleton;
 
 @Singleton
 public class HitDataBean implements Serializable {
-    private DataAccessStrategy dataAccessStrategy;
+    private PointsRepository pointsRepo;
 
     public HitDataBean() {
-        this.dataAccessStrategy = new JDBCDataAccess();
+        this.pointsRepo = new JDBCService();
     }
 
     public List<PointData> getData(Long userId) {
-        return dataAccessStrategy.getAllPoints(userId);
+        return pointsRepo.getAllPoints(userId);
     }
 
     public void addPoint(PointData point) {
-        dataAccessStrategy.addPoint(point);
+        pointsRepo.addPoint(point);
     }
 
     public String getDataAsJson(Long userId) {

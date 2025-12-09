@@ -1,4 +1,4 @@
-package com.lab.web.database;
+package com.lab.web.database.service;
 
 import java.util.List;
 import java.util.UUID;
@@ -7,6 +7,8 @@ import java.util.logging.Logger;
 import com.lab.web.api.LoginResource;
 import com.lab.web.data.PointData;
 import com.lab.web.data.User;
+import com.lab.web.database.repository.PointsRepository;
+import com.lab.web.database.repository.UserRepository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
@@ -16,16 +18,16 @@ import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 
 @Transactional
-public class HibernateDataAccess implements DataAccessStrategy {
+public class HibernateService implements UserRepository, PointsRepository {
     @PersistenceContext(unitName = "com.lab.web3")
     private EntityManager entityManager;
 
-    private static HibernateDataAccess instance;
+    private static HibernateService instance;
 
     private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
 
-    public static HibernateDataAccess getInstance() {
-        return instance == null ? instance = new HibernateDataAccess() : instance;
+    public static HibernateService getInstance() {
+        return instance == null ? instance = new HibernateService() : instance;
     }
 
     @Override

@@ -7,9 +7,8 @@ import com.lab.web.api.records.LoginRequest;
 import com.lab.web.api.records.LoginResponse;
 import com.lab.web.api.records.LogoutResponse;
 import com.lab.web.data.User;
-import com.lab.web.database.DataAccessStrategy;
-import com.lab.web.database.JDBCDataAccess;
-import com.lab.web.utils.UserVetification;
+import com.lab.web.database.repository.UserRepository;
+import com.lab.web.database.service.JDBCService;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.Consumes;
@@ -34,10 +33,10 @@ public class LoginResource {
     @Context
     private UriInfo context;
 
-    private DataAccessStrategy dataAccess;
+    private UserRepository userRepo;
 
     public LoginResource() {
-        this.dataAccess = new JDBCDataAccess();
+        this.userRepo = new JDBCService();
     }
 
     private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
@@ -68,22 +67,22 @@ public class LoginResource {
             }
 
             User user = new User(null, request.username(), request.password(), null);
-            boolean userExists = dataAccess.isUserExist(user);
+            boolean userExists = userRepo.isUserExist(user);
 
             if (!userExists) {
                 String token = UUID.randomUUID().toString();
                 User newUser = new User(null, request.username().trim(), request.password(), token);
-                dataAccess.createUser(newUser);
+                userRepo.createUser(newUser);
 
                 logger.info("New user registered: " + request.username());
                 return Response.ok(new LoginResponse(null, token)).build();
 
             } else {
-                boolean passwordCorrect = dataAccess.checkPassword(user);
+                boolean passwordCorrect = userRepo.checkPassword(user);
 
                 if (passwordCorrect) {
-                    dataAccess.generateToken(user);
-                    String token = dataAccess.getToken(user);
+                    userRepo.generateToken(user);
+                    String token = userRepo.getToken(user);
 
                     logger.info("Successful login for user: " + request.username());
                     return Response.ok(new LoginResponse(null, token)).build();
@@ -123,7 +122,7 @@ public class LoginResource {
                         .build();
             }
 
-            User user = dataAccess.getUserByToken(token);
+            User user = userRepo.getUserByToken(token);
             if (user == null) {
                 logger.warning("Logout attempt with invalid token");
                 return Response.status(Status.UNAUTHORIZED)
@@ -131,7 +130,7 @@ public class LoginResource {
                         .build();
             }
 
-            dataAccess.invalidateToken(token);
+            userRepo.invalidateToken(token);
 
             logger.info("Successful logout for user: " + user.username());
             return Response.ok(new LogoutResponse(true)).build();

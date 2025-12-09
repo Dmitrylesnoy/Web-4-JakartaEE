@@ -1,4 +1,4 @@
-package com.lab.web.database;
+package com.lab.web.database.service;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,19 +17,21 @@ import javax.sql.DataSource;
 import com.lab.web.api.LoginResource;
 import com.lab.web.data.PointData;
 import com.lab.web.data.User;
+import com.lab.web.database.repository.PointsRepository;
+import com.lab.web.database.repository.UserRepository;
 import com.lab.web.utils.UserVetification;
 
 import jakarta.transaction.Transactional;
 
 @Transactional
-public class JDBCDataAccess implements DataAccessStrategy {
+public class JDBCService implements UserRepository, PointsRepository {
     private DataSource dataSource;
 
-    private static JDBCDataAccess instance;
+    private static JDBCService instance;
 
     private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
 
-    public JDBCDataAccess() {
+    public JDBCService() {
         try {
             InitialContext ctx = new InitialContext();
             this.dataSource = (DataSource) ctx.lookup("java:/jboss/datasources/MyPostgresDS");
@@ -38,8 +40,8 @@ public class JDBCDataAccess implements DataAccessStrategy {
         }
     }
 
-    public static JDBCDataAccess getInstance() {
-        return instance == null ? instance = new JDBCDataAccess() : instance;
+    public static JDBCService getInstance() {
+        return instance == null ? instance = new JDBCService() : instance;
     }
 
     @Override
