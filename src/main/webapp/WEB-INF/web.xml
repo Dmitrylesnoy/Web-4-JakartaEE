@@ -5,4 +5,14 @@
   <session-config>
     <session-timeout>-1</session-timeout>
   </session-config>
+
+  <error-page>
+    <error-code>404</error-code>
+    <location>/index.html</location>
+  </error-page>
+
+  <context-param>
+    <param-name>contextPath</param-name>
+    <param-value>/app</param-value>
+  </context-param>
 </web-app>

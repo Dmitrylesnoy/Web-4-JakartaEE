@@ -1,7 +1,6 @@
 package com.lab.web.api;
 
 import java.net.URI;
-import java.util.Locale;
 import java.util.logging.Logger;
 
 import com.lab.web.api.records.Point;
@@ -24,6 +23,10 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 @Provider
 @Path("/form")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -35,7 +38,10 @@ public class FormResource {
     @Inject
     private HitDataBean hitDataBean;
 
-    private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
+    private static final Logger logger = Logger.getLogger(FormResource.class.getName());
+
+    private ObjectWriter ow = new ObjectMapper().registerModule(new JavaTimeModule()).writer()
+            .withDefaultPrettyPrinter();
 
     @GET
     public Response getData(@HeaderParam("AuthToken") String authTokenHeader) {
@@ -43,7 +49,10 @@ public class FormResource {
             UserVetification.checkUserByToken(authTokenHeader);
 
             logger.info("success data fetch");
-            return Response.ok().entity(hitDataBean.getDataAsJson(UserVetification.getUserIDbyToken(authTokenHeader)))
+            String jsonResponce = ow
+                    .writeValueAsString(hitDataBean.getData(UserVetification.getUserIDbyToken(authTokenHeader)));
+
+            return Response.ok().entity(jsonResponce)
                     .type(MediaType.APPLICATION_JSON).build();
         } catch (AuthException e) {
             URI logoutUri = context.getBaseUriBuilder().path("user").path("logout").build();
@@ -65,20 +74,18 @@ public class FormResource {
                     String.valueOf(pointBean.x()),
                     String.valueOf(pointBean.y()),
                     String.valueOf(pointBean.r()),
-                    pointBean.graphFlag());
+                    !pointBean.graphFlag());
 
             Long userId = UserVetification.getUserIDbyToken(authTokenHeader);
             point.setUser(userId);
             hitDataBean.addPoint(point);
 
-            String response = String.format(Locale.US,
-                    "{\"x\": %.4f, \"y\": %.4f, \"r\": %.4f, \"hit\": %b, \"execTime\": %d, \"date\": \"%s\"}",
-                    point.getX(), point.getY(), point.getR(), point.isHit(), point.getExecTime(),
-                    point.getdateFormatted());
-            logger.info("Processed point: graph " + pointBean.graphFlag() + " User: " + userId + " " + response);
+            String jsonResponce = ow.writeValueAsString(point);
+
+            logger.info("Processed point: graph %b" + pointBean.graphFlag() + " User: " + userId + " " + jsonResponce);
 
             return Response.ok()
-                    .entity(response)
+                    .entity(jsonResponce)
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (AuthException e) {
