@@ -16,7 +16,7 @@ public interface DataAccessStrategy {
 
     boolean checkPassword(User user);
 
-    void generateToken(User user);
+    String generateToken(User user);
 
     String getToken(User user);
 

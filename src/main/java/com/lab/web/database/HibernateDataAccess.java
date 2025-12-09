@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import com.lab.web.API.LoginResource;
+import com.lab.web.api.LoginResource;
 import com.lab.web.data.PointData;
 import com.lab.web.data.User;
 
@@ -72,7 +72,7 @@ public class HibernateDataAccess implements DataAccessStrategy {
     }
 
     @Override
-    public void generateToken(User user) {
+    public String generateToken(User user) {
         Query query = entityManager.createQuery("SELECT u FROM User u WHERE u.username = :username");
         query.setParameter("username", user.username());
         try {
@@ -81,6 +81,7 @@ public class HibernateDataAccess implements DataAccessStrategy {
             User updatedUser = new User(existingUser.id(), existingUser.username(), existingUser.password(), newToken);
             entityManager.merge(updatedUser);
             logger.info("Hibernate: token generated for user - " + user.username());
+            return newToken;
         } catch (NoResultException e) {
             throw new RuntimeException("User not found: " + user.username(), e);
         }

@@ -14,9 +14,10 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
-import com.lab.web.API.LoginResource;
+import com.lab.web.api.LoginResource;
 import com.lab.web.data.PointData;
 import com.lab.web.data.User;
+import com.lab.web.utils.UserVetification;
 
 import jakarta.transaction.Transactional;
 
@@ -108,7 +109,7 @@ public class JDBCDataAccess implements DataAccessStrategy {
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, user.username());
-            stmt.setString(2, user.password());
+            stmt.setString(2, UserVetification.hashPassword(user.password()));
             stmt.setString(3, user.token());
             stmt.executeUpdate();
             logger.info("JDBC: user created - " + user.username());
@@ -119,14 +120,14 @@ public class JDBCDataAccess implements DataAccessStrategy {
 
     @Override
     public boolean checkPassword(User user) {
-        String sql = "SELECT COUNT(*) FROM web_users WHERE username = ? AND password = ?";
+        String sql = "SELECT password FROM web_users WHERE username = ?";
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, user.username());
-            stmt.setString(2, user.password());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                return rs.getInt(1) > 0;
+                String storedPassword = rs.getString("password");
+                return UserVetification.verifyPassword(user.password(), storedPassword);
             }
             return false;
         } catch (SQLException e) {
@@ -135,7 +136,7 @@ public class JDBCDataAccess implements DataAccessStrategy {
     }
 
     @Override
-    public void generateToken(User user) {
+    public String generateToken(User user) {
         String sql = "UPDATE web_users SET token = ? WHERE username = ?";
         String newToken = UUID.randomUUID().toString();
         try (Connection conn = dataSource.getConnection();
@@ -147,6 +148,7 @@ public class JDBCDataAccess implements DataAccessStrategy {
                 throw new RuntimeException("User not found: " + user.username());
             }
             logger.info("JDBC: token generated for user - " + user.username());
+            return newToken;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to generate token", e);
         }

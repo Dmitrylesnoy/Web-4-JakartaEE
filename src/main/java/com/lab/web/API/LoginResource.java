@@ -1,14 +1,15 @@
-package com.lab.web.API;
+package com.lab.web.api;
 
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import com.lab.web.API.records.LoginRequest;
-import com.lab.web.API.records.LoginResponse;
-import com.lab.web.API.records.LogoutResponse;
+import com.lab.web.api.records.LoginRequest;
+import com.lab.web.api.records.LoginResponse;
+import com.lab.web.api.records.LogoutResponse;
 import com.lab.web.data.User;
 import com.lab.web.database.DataAccessStrategy;
 import com.lab.web.database.JDBCDataAccess;
+import com.lab.web.utils.UserVetification;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.Consumes;
@@ -42,7 +43,7 @@ public class LoginResource {
     private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
 
     /*
-     * input: {username, hashedPassword}
+     * input: {username, password}
      * output: {result: "successfully login" | "user registered" | "wrong password",
      * token: string | null}
      */
@@ -52,26 +53,26 @@ public class LoginResource {
         logger.info("Login attempt for user: " + (request != null ? request.username() : "null"));
 
         try {
-            if (request == null || request.username() == null || request.hashedPassword() == null) {
-                logger.warning("Invalid login request - missing required fields");
+            if (request == null || request.username() == null || request.password() == null) {
+                logger.warning("Invalid login request - missing required fields. Request: " + request.toString());
                 return Response.status(Status.BAD_REQUEST)
                         .entity(new LoginResponse("invalid request", null))
                         .build();
             }
 
-            if (request.username().trim().isEmpty() || request.hashedPassword().trim().isEmpty()) {
+            if (request.username().trim().isEmpty() || request.password().trim().isEmpty()) {
                 logger.warning("Invalid login request - empty username or password");
                 return Response.status(Status.BAD_REQUEST)
                         .entity(new LoginResponse("invalid request", null))
                         .build();
             }
 
-            User user = new User(null, request.username().trim(), request.hashedPassword().trim(), null);
+            User user = new User(null, request.username(), request.password(), null);
             boolean userExists = dataAccess.isUserExist(user);
 
             if (!userExists) {
                 String token = UUID.randomUUID().toString();
-                User newUser = new User(null, request.username().trim(), request.hashedPassword().trim(), token);
+                User newUser = new User(null, request.username().trim(), request.password(), token);
                 dataAccess.createUser(newUser);
 
                 logger.info("New user registered: " + request.username());
