@@ -1,13 +1,13 @@
-package com.lab.web.API;
+package com.lab.web.api;
 
 import java.net.URI;
 import java.util.Locale;
 import java.util.logging.Logger;
 
-import com.lab.web.API.records.Point;
+import com.lab.web.api.records.Point;
 import com.lab.web.data.HitDataBean;
 import com.lab.web.data.PointData;
-import com.lab.web.utils.TokenVetification;
+import com.lab.web.utils.UserVetification;
 import com.lab.web.utils.Validator;
 
 import jakarta.inject.Inject;
@@ -40,10 +40,10 @@ public class FormResource {
     @GET
     public Response getData(@HeaderParam("AuthToken") String authTokenHeader) {
         try {
-            TokenVetification.checkUserByToken(authTokenHeader);
+            UserVetification.checkUserByToken(authTokenHeader);
 
             logger.info("success data fetch");
-            return Response.ok().entity(hitDataBean.getDataAsJson(TokenVetification.getUserIDbyToken(authTokenHeader)))
+            return Response.ok().entity(hitDataBean.getDataAsJson(UserVetification.getUserIDbyToken(authTokenHeader)))
                     .type(MediaType.APPLICATION_JSON).build();
         } catch (AuthException e) {
             URI logoutUri = context.getBaseUriBuilder().path("user").path("logout").build();
@@ -59,7 +59,7 @@ public class FormResource {
     @POST
     public Response postForm(@HeaderParam("AuthToken") String authTokenHeader, Point pointBean) {
         try {
-            TokenVetification.checkUserByToken(authTokenHeader);
+            UserVetification.checkUserByToken(authTokenHeader);
 
             PointData point = Validator.fillPoint(
                     String.valueOf(pointBean.x()),
@@ -67,7 +67,7 @@ public class FormResource {
                     String.valueOf(pointBean.r()),
                     pointBean.graphFlag());
 
-            Long userId = TokenVetification.getUserIDbyToken(authTokenHeader);
+            Long userId = UserVetification.getUserIDbyToken(authTokenHeader);
             point.setUser(userId);
             hitDataBean.addPoint(point);
 

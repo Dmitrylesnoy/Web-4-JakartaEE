@@ -1,4 +1,4 @@
-package com.lab.web.API.records;
+package com.lab.web.api.records;
 
-public record LoginRequest(String username, String hashedPassword) {
+public record LoginRequest(String username, String password) {
 }
