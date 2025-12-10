@@ -46,9 +46,19 @@ public class PointData implements Serializable {
         this.r = r;
     }
 
+    public PointData(float x, float y, float r, boolean hit, long execTime, LocalDateTime date, Long user) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.hit = hit;
+        this.execTime = execTime;
+        this.date = date;
+        this.user = user;
+    }
+
     @Override
     public String toString() {
-        return String.format("X: %f , Y: %f , R: %f , Hit: %b , Exec: %d , Date: %s , UserID: %l", x, y, r, hit,
+        return String.format("X: %f , Y: %f , R: %f , Hit: %b , Exec: %d , Date: %s , UserID: %d", x, y, r, hit,
                 execTime, date, user);
     }
 
