@@ -1,6 +1,8 @@
 package com.lab.web.api;
 
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import com.lab.web.api.records.Point;
@@ -26,6 +28,8 @@ import jakarta.ws.rs.ext.Provider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 @Provider
 @Path("/form")
@@ -39,6 +43,9 @@ public class FormResource {
     private HitDataBean hitDataBean;
 
     private static final Logger logger = Logger.getLogger(FormResource.class.getName());
+
+    private static final Cache<Point, PointData> cache = Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES)
+            .maximumSize(100).build();
 
     private ObjectWriter ow = new ObjectMapper().registerModule(new JavaTimeModule()).writer()
             .withDefaultPrettyPrinter();
@@ -69,21 +76,26 @@ public class FormResource {
     public Response postForm(@HeaderParam("AuthToken") String authTokenHeader, Point pointBean) {
         try {
             UserVetification.checkUserByToken(authTokenHeader);
-
-            PointData point = Validator.fillPoint(
-                    String.valueOf(pointBean.x()),
-                    String.valueOf(pointBean.y()),
-                    String.valueOf(pointBean.r()),
-                    !pointBean.graphFlag());
+            PointData cachedPoint = cache.getIfPresent(pointBean);
+            if (cachedPoint == null) {
+                logger.info("point did not found in cache " + pointBean.toString());
+                cachedPoint = Validator.fillPoint(
+                        String.valueOf(pointBean.x()),
+                        String.valueOf(pointBean.y()),
+                        String.valueOf(pointBean.r()),
+                        !pointBean.graphFlag());
+                cache.put(pointBean, cachedPoint);
+            } else {
+                logger.info("Get point from cache " + cachedPoint.toString());
+            }
 
             Long userId = UserVetification.getUserIDbyToken(authTokenHeader);
-            point.setUser(userId);
-            hitDataBean.addPoint(point);
+            PointData newPoint = new PointData(cachedPoint.getX(), cachedPoint.getY(), cachedPoint.getR(),
+                    cachedPoint.isHit(), cachedPoint.getExecTime(), LocalDateTime.now(), userId);
+            hitDataBean.addPoint(newPoint);
 
-            String jsonResponce = ow.writeValueAsString(point);
-
-            logger.info("Processed point: graph %b" + pointBean.graphFlag() + " User: " + userId + " " + jsonResponce);
-
+            String jsonResponce = ow.writeValueAsString(newPoint);
+            logger.info("Processed point: graph " + pointBean.graphFlag() + " User: " + userId + " " + jsonResponce);
             return Response.ok()
                     .entity(jsonResponce)
                     .type(MediaType.APPLICATION_JSON)
