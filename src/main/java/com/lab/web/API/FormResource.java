@@ -5,14 +5,21 @@ import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.lab.web.api.records.Point;
 import com.lab.web.data.HitDataBean;
 import com.lab.web.data.PointData;
+import com.lab.web.utils.RateLimiter;
 import com.lab.web.utils.UserVetification;
-import com.lab.web.utils.Validator;
+import com.lab.web.utils.PointValidator;
 
 import jakarta.inject.Inject;
 import jakarta.security.auth.message.AuthException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
@@ -25,12 +32,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-
 @Provider
 @Path("/form")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -38,6 +39,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 public class FormResource {
     @Context
     private UriInfo context;
+
+    @Context
+    private HttpServletRequest httpRequest;
 
     @Inject
     private HitDataBean hitDataBean;
@@ -54,6 +58,11 @@ public class FormResource {
     public Response getData(@HeaderParam("AuthToken") String authTokenHeader) {
         try {
             UserVetification.checkUserByToken(authTokenHeader);
+
+            if (!RateLimiter.tryFormConsume(httpRequest, 1)) {
+                return Response.status(Response.Status.TOO_MANY_REQUESTS).entity("{\"error\": \"Too many requests\"}")
+                        .type(MediaType.APPLICATION_JSON).build();
+            }
 
             logger.info("success data fetch");
             String jsonResponce = ow
@@ -76,10 +85,16 @@ public class FormResource {
     public Response postForm(@HeaderParam("AuthToken") String authTokenHeader, Point pointBean) {
         try {
             UserVetification.checkUserByToken(authTokenHeader);
+
+            if (!RateLimiter.tryFormConsume(httpRequest, 1)) {
+                return Response.status(Response.Status.TOO_MANY_REQUESTS).entity("{\"error\": \"Too many requests\"}")
+                        .type(MediaType.APPLICATION_JSON).build();
+            }
+
             PointData cachedPoint = cache.getIfPresent(pointBean);
             if (cachedPoint == null) {
                 logger.info("point did not found in cache " + pointBean.toString());
-                cachedPoint = Validator.fillPoint(
+                cachedPoint = PointValidator.fillPoint(
                         String.valueOf(pointBean.x()),
                         String.valueOf(pointBean.y()),
                         String.valueOf(pointBean.r()),
