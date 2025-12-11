@@ -9,8 +9,10 @@ import com.lab.web.api.records.LogoutResponse;
 import com.lab.web.data.User;
 import com.lab.web.database.repository.UserRepository;
 import com.lab.web.database.service.JDBCService;
+import com.lab.web.utils.RateLimiter;
 
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
@@ -33,6 +35,9 @@ public class LoginResource {
     @Context
     private UriInfo context;
 
+    @Context
+    private HttpServletRequest httpRequest;
+
     private UserRepository userRepo;
 
     public LoginResource() {
@@ -52,6 +57,13 @@ public class LoginResource {
         logger.info("Login attempt for user: " + (request != null ? request.username() : "null"));
 
         try {
+
+            if (!RateLimiter.tryLoginConsume(httpRequest, 1)) {
+                return Response.status(Status.TOO_MANY_REQUESTS)
+                        .entity(new LoginResponse("too many requests", null))
+                        .build();
+            }
+
             if (request == null || request.username() == null || request.password() == null) {
                 logger.warning("Invalid login request - missing required fields. Request: " + request.toString());
                 return Response.status(Status.BAD_REQUEST)
@@ -113,6 +125,12 @@ public class LoginResource {
         logger.info("Logout attempt");
 
         try {
+            if (!RateLimiter.tryLoginConsume(httpRequest, 1)) {
+                return Response.status(Status.TOO_MANY_REQUESTS)
+                        .entity(new LogoutResponse(false))
+                        .build();
+            }
+
             String token = authTokenHeader;
 
             if (token == null || token.trim().isEmpty()) {

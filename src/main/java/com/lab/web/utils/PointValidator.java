@@ -2,10 +2,7 @@ package com.lab.web.utils;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.concurrent.TimeUnit;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.lab.web.data.PointData;
 
 import lombok.Getter;
@@ -13,10 +10,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Validator implements Serializable {
-
-    private static Cache<String, PointData> cache = Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES)
-            .maximumSize(100).build();
+public class PointValidator implements Serializable {
 
     public static boolean validateX(Float x) {
         return x >= -3 && x <= 5;
