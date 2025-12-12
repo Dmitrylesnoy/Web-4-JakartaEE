@@ -20,13 +20,7 @@ public class HibernateService implements UserRepository, PointsRepository {
     @PersistenceContext(unitName = "com.lab.web3")
     private EntityManager entityManager;
 
-    private static HibernateService instance;
-
     private static final Logger logger = Logger.getLogger(HibernateService.class.getName());
-
-    public static HibernateService getInstance() {
-        return instance == null ? instance = new HibernateService() : instance;
-    }
 
     @Override
     public List<PointData> getAllPoints(Long userId) {

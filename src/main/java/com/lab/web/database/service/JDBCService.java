@@ -19,13 +19,15 @@ import com.lab.web.database.repository.PointsRepository;
 import com.lab.web.database.repository.UserRepository;
 import com.lab.web.utils.auth.PasswordService;
 
+import jakarta.ejb.Singleton;
+import jakarta.ejb.Startup;
 import jakarta.transaction.Transactional;
 
+@Startup
+@Singleton
 @Transactional
 public class JDBCService implements UserRepository, PointsRepository {
     private DataSource dataSource;
-
-    private static JDBCService instance;
 
     private static final Logger logger = Logger.getLogger(JDBCService.class.getName());
 
@@ -36,10 +38,6 @@ public class JDBCService implements UserRepository, PointsRepository {
         } catch (NamingException e) {
             throw new RuntimeException("Failed to lookup DataSource", e);
         }
-    }
-
-    public static JDBCService getInstance() {
-        return instance == null ? instance = new JDBCService() : instance;
     }
 
     @Override

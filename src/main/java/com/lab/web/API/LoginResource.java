@@ -7,11 +7,11 @@ import com.lab.web.api.records.LoginResponse;
 import com.lab.web.api.records.LogoutResponse;
 import com.lab.web.data.User;
 import com.lab.web.database.repository.UserRepository;
-import com.lab.web.database.service.JDBCService;
 import com.lab.web.utils.RateLimiter;
 import com.lab.web.utils.auth.UserVetification;
 
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -38,7 +38,11 @@ public class LoginResource {
     @Context
     private HttpServletRequest httpRequest;
 
-    private UserRepository userRepo = JDBCService.getInstance();
+    @Inject
+    private UserRepository userRepo;
+
+    @Inject
+    private UserVetification userVetification;
 
     private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
 
@@ -80,7 +84,7 @@ public class LoginResource {
             if (!userExists) {
                 userRepo.createUser(user);
 
-                String token = UserVetification.generateToken(request.username());
+                String token = userVetification.generateToken(request.username());
 
                 logger.info("New user registered: " + request.username());
                 return Response.ok(new LoginResponse(null, token)).build();
@@ -88,7 +92,7 @@ public class LoginResource {
                 boolean passwordCorrect = userRepo.checkPassword(user);
 
                 if (passwordCorrect) {
-                    String token = UserVetification.generateToken(request.username());
+                    String token = userVetification.generateToken(request.username());
 
                     logger.info("Successful login for user: " + request.username());
                     return Response.ok(new LoginResponse(null, token)).build();
@@ -133,7 +137,7 @@ public class LoginResource {
             }
 
             try {
-                String username = UserVetification.extractUsername(token);
+                String username = userVetification.extractUsername(token);
                 logger.info("Successful logout for user: " + username);
             } catch (Exception e) {
                 logger.warning("Logout attempt with invalid token: " + e.getMessage());

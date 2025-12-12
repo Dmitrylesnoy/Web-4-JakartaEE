@@ -4,24 +4,26 @@ import java.util.logging.Logger;
 
 import com.lab.web.data.User;
 import com.lab.web.database.repository.UserRepository;
-import com.lab.web.database.service.JDBCService;
 
 import io.jsonwebtoken.Claims;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 import jakarta.security.auth.message.AuthException;
 
+@Stateless
 public class UserVetification {
     private static final Logger logger = Logger.getLogger(UserVetification.class.getName());
-    private static UserRepository dataAccess = JDBCService.getInstance();
+
+    @Inject
+    private UserRepository dataAccess;
+
     private static JwtService jwtService = new JwtService();
 
-    private UserVetification() {
-    }
-
-    public static String generateToken(String username) {
+    public String generateToken(String username) {
         return jwtService.generateToken(username);
     }
 
-    private static String normalizeToken(String token) throws AuthException {
+    private String normalizeToken(String token) throws AuthException {
         if (token == null || token.trim().isEmpty()) {
             logger.warning("Fetch attempt without token");
             throw new AuthException("Token required");
@@ -32,12 +34,12 @@ public class UserVetification {
         return token;
     }
 
-    public static String extractUsername(String token) throws AuthException {
+    public String extractUsername(String token) throws AuthException {
         token = normalizeToken(token);
         return jwtService.extractUsername(token);
     }
 
-    public static void checkUserByToken(String token) throws AuthException {
+    public void checkUserByToken(String token) throws AuthException {
         token = normalizeToken(token);
         try {
             jwtService.extractClaims(token);
@@ -47,7 +49,7 @@ public class UserVetification {
         }
     }
 
-    public static Long getUserIDbyToken(String token) throws AuthException {
+    public Long getUserIDbyToken(String token) throws AuthException {
         token = normalizeToken(token);
         try {
             Claims claims = jwtService.extractClaims(token);

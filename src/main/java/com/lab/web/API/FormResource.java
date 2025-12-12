@@ -1,3 +1,4 @@
+
 package com.lab.web.api;
 
 import java.net.URI;
@@ -46,6 +47,9 @@ public class FormResource {
     @Inject
     private HitDataBean hitDataBean;
 
+    @Inject
+    private UserVetification userVetification;
+
     private static final Logger logger = Logger.getLogger(FormResource.class.getName());
 
     private static final Cache<Point, PointData> cache = Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES)
@@ -57,7 +61,7 @@ public class FormResource {
     @GET
     public Response getData(@HeaderParam("Authorization") String token) {
         try {
-            UserVetification.checkUserByToken(token);
+            userVetification.checkUserByToken(token);
 
             if (!RateLimiter.tryFormConsume(httpRequest, 1)) {
                 return Response.status(Response.Status.TOO_MANY_REQUESTS).entity("{\"error\": \"Too many requests \"}")
@@ -66,7 +70,7 @@ public class FormResource {
 
             logger.info("success data fetch");
             String jsonResponce = ow
-                    .writeValueAsString(hitDataBean.getData(UserVetification.getUserIDbyToken(token)));
+                    .writeValueAsString(hitDataBean.getData(userVetification.getUserIDbyToken(token)));
 
             return Response.ok().entity(jsonResponce)
                     .type(MediaType.APPLICATION_JSON).build();
@@ -84,7 +88,7 @@ public class FormResource {
     @POST
     public Response postForm(@HeaderParam("Authorization") String token, Point pointBean) {
         try {
-            UserVetification.checkUserByToken(token);
+            userVetification.checkUserByToken(token);
 
             if (!RateLimiter.tryFormConsume(httpRequest, 1)) {
                 return Response.status(Response.Status.TOO_MANY_REQUESTS)
@@ -105,7 +109,7 @@ public class FormResource {
                 logger.info("Get point from cache " + cachedPoint.toString());
             }
 
-            Long userId = UserVetification.getUserIDbyToken(token);
+            Long userId = userVetification.getUserIDbyToken(token);
             PointData newPoint = new PointData(cachedPoint.getX(), cachedPoint.getY(), cachedPoint.getR(),
                     cachedPoint.isHit(), cachedPoint.getExecTime(), LocalDateTime.now(), userId);
             hitDataBean.addPoint(newPoint);
