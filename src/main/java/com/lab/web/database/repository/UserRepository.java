@@ -9,11 +9,5 @@ public interface UserRepository {
 
     boolean checkPassword(User user);
 
-    String generateToken(User user);
-
-    String getToken(User user);
-
-    User getUserByToken(String token);
-
-    void invalidateToken(String token);
+    User getUserByUsername(String username);
 }

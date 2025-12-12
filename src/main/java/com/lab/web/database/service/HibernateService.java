@@ -1,10 +1,8 @@
 package com.lab.web.database.service;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.logging.Logger;
 
-import com.lab.web.api.LoginResource;
 import com.lab.web.data.PointData;
 import com.lab.web.data.User;
 import com.lab.web.database.repository.PointsRepository;
@@ -24,7 +22,7 @@ public class HibernateService implements UserRepository, PointsRepository {
 
     private static HibernateService instance;
 
-    private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
+    private static final Logger logger = Logger.getLogger(HibernateService.class.getName());
 
     public static HibernateService getInstance() {
         return instance == null ? instance = new HibernateService() : instance;
@@ -74,51 +72,13 @@ public class HibernateService implements UserRepository, PointsRepository {
     }
 
     @Override
-    public String generateToken(User user) {
+    public User getUserByUsername(String username) {
         Query query = entityManager.createQuery("SELECT u FROM User u WHERE u.username = :username");
-        query.setParameter("username", user.username());
-        try {
-            User existingUser = (User) query.getSingleResult();
-            String newToken = UUID.randomUUID().toString();
-            User updatedUser = new User(existingUser.id(), existingUser.username(), existingUser.password(), newToken);
-            entityManager.merge(updatedUser);
-            logger.info("Hibernate: token generated for user - " + user.username());
-            return newToken;
-        } catch (NoResultException e) {
-            throw new RuntimeException("User not found: " + user.username(), e);
-        }
-    }
-
-    @Override
-    public String getToken(User user) {
-        Query query = entityManager.createQuery("SELECT u FROM User u WHERE u.username = :username");
-        query.setParameter("username", user.username());
-        try {
-            User foundUser = (User) query.getSingleResult();
-            return foundUser.token();
-        } catch (NoResultException e) {
-            throw new RuntimeException("User not found: " + user.username(), e);
-        }
-    }
-
-    @Override
-    public User getUserByToken(String token) {
-        Query query = entityManager.createQuery("SELECT u FROM User u WHERE u.token = :token");
-        query.setParameter("token", token);
+        query.setParameter("username", username);
         try {
             return (User) query.getSingleResult();
         } catch (NoResultException e) {
             return null;
-        }
-    }
-
-    @Override
-    public void invalidateToken(String token) {
-        Query query = entityManager.createQuery("UPDATE User u SET u.token = NULL WHERE u.token = :token");
-        query.setParameter("token", token);
-        int rowsAffected = query.executeUpdate();
-        if (rowsAffected > 0) {
-            logger.info("Hibernate: token invalidated - " + token);
         }
     }
 }

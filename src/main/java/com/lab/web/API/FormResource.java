@@ -14,7 +14,7 @@ import com.lab.web.api.records.Point;
 import com.lab.web.data.HitDataBean;
 import com.lab.web.data.PointData;
 import com.lab.web.utils.RateLimiter;
-import com.lab.web.utils.UserVetification;
+import com.lab.web.utils.auth.UserVetification;
 import com.lab.web.utils.PointValidator;
 
 import jakarta.inject.Inject;
@@ -55,18 +55,18 @@ public class FormResource {
             .withDefaultPrettyPrinter();
 
     @GET
-    public Response getData(@HeaderParam("AuthToken") String authTokenHeader) {
+    public Response getData(@HeaderParam("Authorization") String token) {
         try {
-            UserVetification.checkUserByToken(authTokenHeader);
+            UserVetification.checkUserByToken(token);
 
             if (!RateLimiter.tryFormConsume(httpRequest, 1)) {
-                return Response.status(Response.Status.TOO_MANY_REQUESTS).entity("{\"error\": \"Too many requests\"}")
+                return Response.status(Response.Status.TOO_MANY_REQUESTS).entity("{\"error\": \"Too many requests \"}")
                         .type(MediaType.APPLICATION_JSON).build();
             }
 
             logger.info("success data fetch");
             String jsonResponce = ow
-                    .writeValueAsString(hitDataBean.getData(UserVetification.getUserIDbyToken(authTokenHeader)));
+                    .writeValueAsString(hitDataBean.getData(UserVetification.getUserIDbyToken(token)));
 
             return Response.ok().entity(jsonResponce)
                     .type(MediaType.APPLICATION_JSON).build();
@@ -82,12 +82,13 @@ public class FormResource {
     }
 
     @POST
-    public Response postForm(@HeaderParam("AuthToken") String authTokenHeader, Point pointBean) {
+    public Response postForm(@HeaderParam("Authorization") String token, Point pointBean) {
         try {
-            UserVetification.checkUserByToken(authTokenHeader);
+            UserVetification.checkUserByToken(token);
 
             if (!RateLimiter.tryFormConsume(httpRequest, 1)) {
-                return Response.status(Response.Status.TOO_MANY_REQUESTS).entity("{\"error\": \"Too many requests\"}")
+                return Response.status(Response.Status.TOO_MANY_REQUESTS)
+                        .entity("{\"error\": \"Too many requests for form\"}")
                         .type(MediaType.APPLICATION_JSON).build();
             }
 
@@ -104,7 +105,7 @@ public class FormResource {
                 logger.info("Get point from cache " + cachedPoint.toString());
             }
 
-            Long userId = UserVetification.getUserIDbyToken(authTokenHeader);
+            Long userId = UserVetification.getUserIDbyToken(token);
             PointData newPoint = new PointData(cachedPoint.getX(), cachedPoint.getY(), cachedPoint.getR(),
                     cachedPoint.isHit(), cachedPoint.getExecTime(), LocalDateTime.now(), userId);
             hitDataBean.addPoint(newPoint);

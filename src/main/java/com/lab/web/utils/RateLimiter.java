@@ -11,7 +11,12 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public class RateLimiter {
 
-    private static final Cache<String, Bucket> cache = Caffeine.newBuilder()
+    private static final Cache<String, Bucket> loginCache = Caffeine.newBuilder()
+            .expireAfterAccess(1, TimeUnit.HOURS)
+            .maximumSize(10000)
+            .build();
+
+    private static final Cache<String, Bucket> formCache = Caffeine.newBuilder()
             .expireAfterAccess(1, TimeUnit.HOURS)
             .maximumSize(10000)
             .build();
@@ -21,7 +26,7 @@ public class RateLimiter {
 
     public static Bucket getFormBucket(HttpServletRequest request) {
         String ip = request.getRemoteAddr();
-        return cache.get(ip, k -> Bucket.builder()
+        return formCache.get(ip, k -> Bucket.builder()
                 .addLimit(limit -> limit.capacity(30).refillGreedy(10, Duration.ofMinutes(1)))
                 .build());
     }
@@ -33,7 +38,7 @@ public class RateLimiter {
 
     public static Bucket getLoginBucket(HttpServletRequest request) {
         String ip = request.getRemoteAddr();
-        return cache.get(ip, k -> Bucket.builder()
+        return loginCache.get(ip, k -> Bucket.builder()
                 .addLimit(limit -> limit.capacity(5).refillGreedy(5, Duration.ofMinutes(1)))
                 .build());
     }

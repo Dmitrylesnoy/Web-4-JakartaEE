@@ -7,19 +7,17 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 
-import com.lab.web.api.LoginResource;
 import com.lab.web.data.PointData;
 import com.lab.web.data.User;
 import com.lab.web.database.repository.PointsRepository;
 import com.lab.web.database.repository.UserRepository;
-import com.lab.web.utils.UserVetification;
+import com.lab.web.utils.auth.PasswordService;
 
 import jakarta.transaction.Transactional;
 
@@ -29,7 +27,7 @@ public class JDBCService implements UserRepository, PointsRepository {
 
     private static JDBCService instance;
 
-    private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
+    private static final Logger logger = Logger.getLogger(JDBCService.class.getName());
 
     public JDBCService() {
         try {
@@ -107,12 +105,11 @@ public class JDBCService implements UserRepository, PointsRepository {
 
     @Override
     public void createUser(User user) {
-        String sql = "INSERT INTO web_users (username, password, token) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO web_users (username, password) VALUES (?, ?, ?)";
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, user.username());
-            stmt.setString(2, UserVetification.hashPassword(user.password()));
-            stmt.setString(3, user.token());
+            stmt.setString(2, PasswordService.hashPassword(user.password()));
             stmt.executeUpdate();
             logger.info("JDBC: user created - " + user.username());
         } catch (SQLException e) {
@@ -129,7 +126,7 @@ public class JDBCService implements UserRepository, PointsRepository {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 String storedPassword = rs.getString("password");
-                return UserVetification.verifyPassword(user.password(), storedPassword);
+                return PasswordService.verifyPassword(user.password(), storedPassword);
             }
             return false;
         } catch (SQLException e) {
@@ -138,73 +135,21 @@ public class JDBCService implements UserRepository, PointsRepository {
     }
 
     @Override
-    public String generateToken(User user) {
-        String sql = "UPDATE web_users SET token = ? WHERE username = ?";
-        String newToken = UUID.randomUUID().toString();
+    public User getUserByUsername(String username) {
+        String sql = "SELECT id, username, password FROM web_users WHERE username = ?";
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, newToken);
-            stmt.setString(2, user.username());
-            int rowsAffected = stmt.executeUpdate();
-            if (rowsAffected == 0) {
-                throw new RuntimeException("User not found: " + user.username());
-            }
-            logger.info("JDBC: token generated for user - " + user.username());
-            return newToken;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to generate token", e);
-        }
-    }
-
-    @Override
-    public String getToken(User user) {
-        String sql = "SELECT token FROM web_users WHERE username = ?";
-        try (Connection conn = dataSource.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, user.username());
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString("token");
-            } else {
-                throw new RuntimeException("User not found: " + user.username());
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to get token", e);
-        }
-    }
-
-    @Override
-    public User getUserByToken(String token) {
-        String sql = "SELECT id, username, password, token FROM web_users WHERE token = ?";
-        try (Connection conn = dataSource.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, token);
+            stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return new User(
                         rs.getLong("id"),
                         rs.getString("username"),
-                        rs.getString("password"),
-                        rs.getString("token"));
+                        rs.getString("password"));
             }
             return null;
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to get user by token", e);
-        }
-    }
-
-    @Override
-    public void invalidateToken(String token) {
-        String sql = "UPDATE web_users SET token = NULL WHERE token = ?";
-        try (Connection conn = dataSource.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, token);
-            int rowsAffected = stmt.executeUpdate();
-            if (rowsAffected > 0) {
-                logger.info("JDBC: token invalidated - " + token);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to invalidate token", e);
+            throw new RuntimeException("Failed to get user by username", e);
         }
     }
 }
