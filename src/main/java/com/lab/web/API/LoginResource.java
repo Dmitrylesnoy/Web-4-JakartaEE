@@ -1,6 +1,5 @@
 package com.lab.web.api;
 
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import com.lab.web.api.records.LoginRequest;
@@ -10,6 +9,7 @@ import com.lab.web.data.User;
 import com.lab.web.database.repository.UserRepository;
 import com.lab.web.database.service.JDBCService;
 import com.lab.web.utils.RateLimiter;
+import com.lab.web.utils.auth.UserVetification;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,11 +38,7 @@ public class LoginResource {
     @Context
     private HttpServletRequest httpRequest;
 
-    private UserRepository userRepo;
-
-    public LoginResource() {
-        this.userRepo = new JDBCService();
-    }
+    private UserRepository userRepo = JDBCService.getInstance();
 
     private static final Logger logger = Logger.getLogger(LoginResource.class.getName());
 
@@ -78,23 +74,21 @@ public class LoginResource {
                         .build();
             }
 
-            User user = new User(null, request.username(), request.password(), null);
+            User user = new User(null, request.username(), request.password());
             boolean userExists = userRepo.isUserExist(user);
 
             if (!userExists) {
-                String token = UUID.randomUUID().toString();
-                User newUser = new User(null, request.username().trim(), request.password(), token);
-                userRepo.createUser(newUser);
+                userRepo.createUser(user);
+
+                String token = UserVetification.generateToken(request.username());
 
                 logger.info("New user registered: " + request.username());
                 return Response.ok(new LoginResponse(null, token)).build();
-
             } else {
                 boolean passwordCorrect = userRepo.checkPassword(user);
 
                 if (passwordCorrect) {
-                    userRepo.generateToken(user);
-                    String token = userRepo.getToken(user);
+                    String token = UserVetification.generateToken(request.username());
 
                     logger.info("Successful login for user: " + request.username());
                     return Response.ok(new LoginResponse(null, token)).build();
@@ -121,17 +115,15 @@ public class LoginResource {
      */
     @GET
     @Path("/logout")
-    public Response closeSession(@HeaderParam("AuthToken") String authTokenHeader) {
+    public Response closeSession(@HeaderParam("Authorization") String token) {
         logger.info("Logout attempt");
 
         try {
-            if (!RateLimiter.tryLoginConsume(httpRequest, 1)) {
-                return Response.status(Status.TOO_MANY_REQUESTS)
-                        .entity(new LogoutResponse(false))
-                        .build();
-            }
-
-            String token = authTokenHeader;
+            // if (!RateLimiter.tryLoginConsume(httpRequest, 1)) {
+            // return Response.status(Status.TOO_MANY_REQUESTS)
+            // .entity(new LogoutResponse(false))
+            // .build();
+            // }
 
             if (token == null || token.trim().isEmpty()) {
                 logger.warning("Logout attempt without token");
@@ -140,17 +132,16 @@ public class LoginResource {
                         .build();
             }
 
-            User user = userRepo.getUserByToken(token);
-            if (user == null) {
-                logger.warning("Logout attempt with invalid token");
+            try {
+                String username = UserVetification.extractUsername(token);
+                logger.info("Successful logout for user: " + username);
+            } catch (Exception e) {
+                logger.warning("Logout attempt with invalid token: " + e.getMessage());
                 return Response.status(Status.UNAUTHORIZED)
                         .entity(new LogoutResponse(false))
                         .build();
             }
 
-            userRepo.invalidateToken(token);
-
-            logger.info("Successful logout for user: " + user.username());
             return Response.ok(new LogoutResponse(true)).build();
 
         } catch (Exception e) {

@@ -10,8 +10,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "web_users")
 public record User(
-                @Id @GeneratedValue(strategy = GenerationType.IDENTITY) Long id,
-                @Column(name = "username", unique = true, nullable = false) String username,
-                @Column(name = "password", nullable = false) String password,
-                @Column(name = "token", unique = true) String token) {
+        @Id @GeneratedValue(strategy = GenerationType.IDENTITY) Long id,
+        @Column(name = "username", unique = true, nullable = false) String username,
+        @Column(name = "password", nullable = false) String password) {
 }
