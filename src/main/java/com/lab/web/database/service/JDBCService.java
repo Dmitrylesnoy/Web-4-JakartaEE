@@ -103,7 +103,7 @@ public class JDBCService implements UserRepository, PointsRepository {
 
     @Override
     public void createUser(User user) {
-        String sql = "INSERT INTO web_users (username, password) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO web_users (username, password) VALUES (?, ?)";
         try (Connection conn = dataSource.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, user.username());
