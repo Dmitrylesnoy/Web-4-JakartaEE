@@ -51,10 +51,46 @@ tasks.withType(JavaCompile) {
     options.encoding = encoding
 }
 
+tasks.register('compile', JavaCompile)
+
 tasks.withType(Javadoc) {
     options.encoding = encoding
 }
 
+tasks.register("scp", Exec) {
+    dependsOn("build","mybuild")
+
+    def sPort = project.findProperty('server.port')?.toString() ?: "22"
+    def sUrl = project.findProperty('server.url')?.toString()
+    def sDest = project.findProperty('server.destDir')?.toString() ?: "/tmp"
+
+    if (!sUrl) {
+        throw new GradleException("Property 'server.url' is missing in gradle.properties")
+    }
+
+    commandLine "scp", "-P", sPort, "-r", "build/libs/*", "${sUrl}:${sDest}"
+}
+
+tasks.register("team", Exec) {
+    dependsOn "build"
+
+    commandLine "git", "pull"
+
+    def v = project.version
+    def libs = layout.buildDirectory.dir("libs").get().asFile
+    def dist = layout.buildDirectory.dir("dist").get().asFile
+
+    doLast {
+        dist.mkdirs()
+        ant.zip(destfile: new File(dist, "project-release${v}.zip")) {
+            fileset(dir: libs) {
+                include(name: "*.jar")
+                include(name: "*.war")
+            }
+        }
+        println "Archive created in build/dist"
+    }
+}
 
 test {
     useJUnitPlatform()
