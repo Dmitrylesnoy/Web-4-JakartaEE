@@ -1,6 +1,7 @@
 settings.xml
 standalone.xml
 target
+build
 customization
 .env
 /customization
@@ -14,6 +15,7 @@ pom.xml.next
 
 .idea/
 .vscode/
+.gradle/
 
 src/main/webapp
 src/main/webapp/

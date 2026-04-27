@@ -1,0 +1,64 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        url = uri('https://repo.maven.apache.org/maven2/')
+    }
+}
+
+dependencies {
+    api libs.jakarta.persistence.jakarta.persistence.api
+    api libs.org.hibernate.orm.hibernate.core
+    compileOnly libs.org.projectlombok.lombok
+    annotationProcessor libs.org.projectlombok.lombok
+    testCompileOnly libs.org.projectlombok.lombok
+    testAnnotationProcessor libs.org.projectlombok.lombok
+    api libs.org.postgresql.postgresql
+    api libs.at.favre.lib.bcrypt
+    api libs.com.fasterxml.jackson.core.jackson.databind
+    api libs.com.fasterxml.jackson.datatype.jackson.datatype.jsr310
+    api libs.com.bucket4j.bucket4j.jdk17.core
+    api libs.com.github.ben.manes.caffeine.caffeine
+    api libs.io.jsonwebtoken.jjwt.api
+    runtimeOnly libs.io.jsonwebtoken.jjwt.impl
+    runtimeOnly libs.io.jsonwebtoken.jjwt.jackson
+    testImplementation libs.org.junit.jupiter.junit.jupiter
+    testImplementation libs.org.junit.platform.junit.platform.runner
+    testImplementation libs.org.junit.jupiter.junit.jupiter.params
+    compileOnly libs.jakarta.platform.jakarta.jakartaee.web.api
+    compileOnly libs.jakarta.servlet.jsp.jakarta.servlet.jsp.api
+    compileOnly libs.jakarta.servlet.jakarta.servlet.api
+}
+
+group = project.findProperty('projectGroup')
+version = project.findProperty('project.version')
+java.sourceCompatibility = project.findProperty('java.version')
+encoding = project.findProperty('encoding')
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from(components.java)
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = encoding
+}
+
+tasks.withType(Javadoc) {
+    options.encoding = encoding
+}
+
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
