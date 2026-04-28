@@ -51,14 +51,32 @@ tasks.withType(JavaCompile) {
     options.encoding = encoding
 }
 
-tasks.register('compile', JavaCompile)
-
 tasks.withType(Javadoc) {
     options.encoding = encoding
 }
 
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+tasks.register('labCompile', JavaCompile) {
+    dependsOn 'compileJava'
+}
+
+tasks.register('labBuild') {
+    dependsOn 'labCompile'
+    finalizedBy tasks.jar
+}
+
+tasks.register('labTest') {
+    dependsOn 'build', 'test'
+}
+
 tasks.register("scp", Exec) {
-    dependsOn("build","mybuild")
+    dependsOn("labBuild")
 
     def sPort = project.findProperty('server.port')?.toString() ?: "22"
     def sUrl = project.findProperty('server.url')?.toString()
@@ -82,16 +100,9 @@ tasks.register('zip', Zip) {
 }
 
 tasks.register('team', Exec) {
-    dependsOn "build", "zip"
+    dependsOn "labBuild", "zip"
 
     doFirst {
         commandLine "git", "pull"
-    }
-}
-
-test {
-    useJUnitPlatform()
-    testLogging {
-        events "passed", "skipped", "failed"
     }
 }
