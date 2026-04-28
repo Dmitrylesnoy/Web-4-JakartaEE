@@ -57,38 +57,6 @@ tasks.withType(Javadoc) {
     options.encoding = encoding
 }
 
-tasks.register("scp", Exec) {
-    dependsOn("build","mybuild")
-
-    def sPort = project.findProperty('server.port')?.toString() ?: "22"
-    def sUrl = project.findProperty('server.url')?.toString()
-    def sDest = project.findProperty('server.destDir')?.toString() ?: "/tmp"
-
-    if (!sUrl) {
-        throw new GradleException("Property 'server.url' is missing in gradle.properties")
-    }
-
-    commandLine "scp", "-P", sPort, "-r", "build/libs/*", "${sUrl}:${sDest}"
-}
-
-tasks.register('zip', Zip) {
-    dependsOn "jar"
-
-    from layout.buildDirectory.dir("libs")
-    
-    include "*.jar", "*.war"
-
-    archiveFileName = "project-release${project.version}.zip"
-    destinationDirectory = layout.buildDirectory.dir("dist")
-}
-
-tasks.register('team', Exec) {
-    dependsOn "build", "zip"
-
-    doFirst {
-        commandLine "git", "pull"
-    }
-}
 
 test {
     useJUnitPlatform()
