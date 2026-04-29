@@ -72,7 +72,7 @@ tasks.register('labBuild') {
 }
 
 tasks.register('labTest') {
-    dependsOn 'build', 'test'
+    dependsOn 'labBuild', 'test'
 }
 
 tasks.register("scp", Exec) {
