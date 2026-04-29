@@ -16,6 +16,7 @@ pom.xml.next
 .idea/
 .vscode/
 .gradle/
+bin/
 
 src/main/webapp
 src/main/webapp/
